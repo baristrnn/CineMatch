@@ -4,15 +4,18 @@ from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 
+def build_movie_text(movie):
+    genres = ", ".join(movie["genres"])
+    return f"{genres}. {movie['overview']}"
 
 class RecommendationEngine:
     def __init__(self, movies):
         self.movies = movies
         self.model = SentenceTransformer(MODEL_NAME)
 
-        overviews = [movie["overview"] for movie in movies]
-        self.embeddings = self.model.encode(overviews, normalize_embeddings=True)
-    
+        texts = [build_movie_text(movie) for movie in movies]
+        self.embeddings = self.model.encode(texts, normalize_embeddings=True)
+        
     def find_index(self, movie_id):
         for index, movie in enumerate(self.movies):
             if movie["id"] == movie_id:
