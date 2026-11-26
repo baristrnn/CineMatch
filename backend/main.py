@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Query
 from ml.engine import RecommendationEngine
 from ml.tmdb_fetcher import load_movies
+
 
 app = FastAPI()
 
@@ -16,6 +17,13 @@ def root():
 @app.get("/movies")
 def get_movies():
     return movies
+
+@app.get("/movies/search")
+def search_movies(
+    q: str = Query(min_length=2),
+    limit: int = Query(default=10, ge=1, le=50),
+):
+    return engine.search(q, limit)
 
 
 @app.get("/movies/{movie_id}/recommendations")

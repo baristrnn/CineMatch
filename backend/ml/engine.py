@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import numpy as np
@@ -10,6 +11,10 @@ def build_movie_text(movie):
     genres = ", ".join(movie["genres"])
     return f"{genres}. {movie['overview']}"
 
+def normalize_text(text):
+    text = text.lower()
+    text = re.sub(r"\W+", " ", text)
+    return text.strip()
 
 class RecommendationEngine:
     def __init__(self, movies, cache_path):
@@ -65,3 +70,33 @@ class RecommendationEngine:
                 break
 
         return recommendations
+    
+    def search(self, query, limit=10):
+        query = normalize_text(query)
+
+        if not query:
+            return []
+
+        compact_query = query.replace(" ", "")  # 🆕
+
+        starts_with = []
+        contains = []
+        compact_matches = []  # 🆕
+
+        for movie in self.movies:
+            title = normalize_text(movie["title"])
+            compact_title = title.replace(" ", "")  # 🆕
+
+            if title.startswith(query):
+                starts_with.append(movie)
+            elif query in title:
+                contains.append(movie)
+            elif compact_query in compact_title:  # 🆕
+                compact_matches.append(movie)  # 🆕
+
+        results = starts_with + contains + compact_matches  # 🆕
+
+        return [
+            {"id": movie["id"], "title": movie["title"], "genres": movie["genres"]}
+            for movie in results[:limit]
+        ]
