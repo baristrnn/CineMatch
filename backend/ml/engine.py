@@ -1,21 +1,39 @@
-from sentence_transformers import SentenceTransformer
+from pathlib import Path
+
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 
+
 def build_movie_text(movie):
     genres = ", ".join(movie["genres"])
     return f"{genres}. {movie['overview']}"
 
+
 class RecommendationEngine:
-    def __init__(self, movies):
+    def __init__(self, movies, cache_path):
         self.movies = movies
         self.model = SentenceTransformer(MODEL_NAME)
+        self.embeddings = self._load_or_build_embeddings(Path(cache_path))
 
-        texts = [build_movie_text(movie) for movie in movies]
-        self.embeddings = self.model.encode(texts, normalize_embeddings=True)
-        
+    def _load_or_build_embeddings(self, cache_path):
+        if cache_path.exists():
+            embeddings = np.load(cache_path)
+            if len(embeddings) == len(self.movies):
+                print("Loading embeddings from cache...")
+                return embeddings
+
+        print(f"Encoding {len(self.movies)} movies...")
+        texts = [build_movie_text(movie) for movie in self.movies]
+        embeddings = self.model.encode(
+            texts, normalize_embeddings=True, show_progress_bar=True
+        )
+
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(cache_path, embeddings)
+        return embeddings
+
     def find_index(self, movie_id):
         for index, movie in enumerate(self.movies):
             if movie["id"] == movie_id:

@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from ml.engine import RecommendationEngine
-from ml.tmdb_fetcher import fetch_popular_movies
+from ml.tmdb_fetcher import load_movies
 
 app = FastAPI()
 
-movies = fetch_popular_movies(page_count=5)
-engine = RecommendationEngine(movies)
+movies = load_movies("data/movies.json")
+engine = RecommendationEngine(movies, "data/embeddings.npy")
 
 
 @app.get("/")
